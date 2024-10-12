@@ -353,7 +353,7 @@ class IrisWebHooksInterface(IrisModuleInterface):
                 rfile = data[0]['file']
         except AttributeError as AttrException:
             self.log.error(str(AttrException))
-            return
+            raise
 
         if object_url:
             object_name = self._render_url(object_url, object_name, request_rendering)
