@@ -118,9 +118,10 @@ class IrisWebHooksInterface(IrisModuleInterface):
                         else:
                             hooks.append(inhook)
 
-                if 'on_postload' not in iris_hook and 'on_manual_trigger' not in iris_hook:
-                    self.log.warning(f'{iris_hook} is not supported by this module')
-                    continue
+                if iris_hook not in ['on_preload_case_delete', 'on_preload_task_delete']:
+                    if 'on_postload' not in iris_hook and 'on_manual_trigger' not in iris_hook:
+                        self.log.warning(f'{iris_hook} is not supported by this module')
+                        continue
 
                 if 'on_manual_trigger' in iris_hook:
                     # Check that we have a manual trigger name
@@ -266,90 +267,93 @@ class IrisWebHooksInterface(IrisModuleInterface):
             user_name = data[0].user.name
         elif getattr(data[0], 'user_update', None):
             user_name = data[0].user_update.name
-
-        if hook_object == 'case':
-            object_name = data[0].name
-            object_url = f"{server_url}/case?cid={data[0].case_id}"
-            case_name = data[0].name
-            raw_data = {
-                'cases': CaseDetailsSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'asset':
-            object_name = data[0].asset_name
-            case_id = data[0].case_id
-            object_url = f"{server_url}/case/assets?cid={case_id}&shared={data[0].asset_id}"
-            case_name = data[0].case.name
-            raw_data = {
-                'assets': CaseAssetsSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'note':
-            object_name = data[0].note_title
-            case_id = data[0].note_case_id
-            object_url = f"{server_url}/case/notes?cid={case_id}&shared={data[0].note_id}"
-            case_name = data[0].case.name
-            raw_data = {
-                'notes': CaseNoteSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'ioc':
-            object_name = data[0].ioc_value
-            raw_data = {
-                'iocs': IocSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'event':
-            object_name = data[0].event_title
-            case_name = data[0].case.name
-            case_id = data[0].case_id
-            object_url = f"{server_url}/case/timeline?cid={case_id}&shared={data[0].event_id}"
-            raw_data = {
-                'events': EventSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'evidence':
-            object_name = data[0].filename
-            case_name = data[0].case.name
-            case_id = data[0].case_id
-            object_url = f"{server_url}/case/evidences?cid={case_id}&shared={data[0].id}"
-            raw_data = {
-                'evidences': CaseEvidenceSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'task' or hook_object == 'global_task':
-            object_name = data[0].task_title
-            case_name = data[0].case.name
-            case_id = data[0].task_case_id
-            object_url = f"{server_url}/case/tasks?cid={case_id}&shared={data[0].id}"
-            raw_data = {
-                'tasks': CaseTaskSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'alert':
-            if isinstance(data[0], dict):
-                object_url = f"{server_url}/alerts/filter?alert_ids={data[0]['alert_ids']}"
-            else:
-                object_url = f"{server_url}/alerts/filter?alert_ids={data[0].alert_id}"
-            raw_data = {
-                'alerts': AlertSchema(many=True).dump(data),
-                'object_url': object_url
-            }
-
-        elif hook_object == 'report':
-            object_name = data[0]['report_id']
-            user_name = data[0]['user_name']
-            case_name = data[0]['report_id']
-            case_id = data[0]['case_id']
-            file_path = data[0]['file_path']
-            rfile = data[0]['file']
+        try:
+            if hook_object == 'case':
+                object_name = data[0].name
+                object_url = f"{server_url}/case?cid={data[0].case_id}"
+                case_name = data[0].name
+                raw_data = {
+                    'cases': CaseDetailsSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'asset':
+                object_name = data[0].asset_name
+                case_id = data[0].case_id
+                object_url = f"{server_url}/case/assets?cid={case_id}&shared={data[0].asset_id}"
+                case_name = data[0].case.name
+                raw_data = {
+                    'assets': CaseAssetsSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'note':
+                object_name = data[0].note_title
+                case_id = data[0].note_case_id
+                object_url = f"{server_url}/case/notes?cid={case_id}&shared={data[0].note_id}"
+                case_name = data[0].case.name
+                raw_data = {
+                    'notes': CaseNoteSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'ioc':
+                object_name = data[0].ioc_value
+                raw_data = {
+                    'iocs': IocSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'event':
+                object_name = data[0].event_title
+                case_name = data[0].case.name
+                case_id = data[0].case_id
+                object_url = f"{server_url}/case/timeline?cid={case_id}&shared={data[0].event_id}"
+                raw_data = {
+                    'events': EventSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'evidence':
+                object_name = data[0].filename
+                case_name = data[0].case.name
+                case_id = data[0].case_id
+                object_url = f"{server_url}/case/evidences?cid={case_id}&shared={data[0].id}"
+                raw_data = {
+                    'evidences': CaseEvidenceSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'task' or hook_object == 'global_task':
+                object_name = data[0].task_title
+                case_name = data[0].case.name
+                case_id = data[0].task_case_id
+                object_url = f"{server_url}/case/tasks?cid={case_id}&shared={data[0].id}"
+                raw_data = {
+                    'tasks': CaseTaskSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'alert':
+                if isinstance(data[0], dict):
+                    object_url = f"{server_url}/alerts/filter?alert_ids={data[0]['alert_ids']}"
+                else:
+                    object_url = f"{server_url}/alerts/filter?alert_ids={data[0].alert_id}"
+                raw_data = {
+                    'alerts': AlertSchema(many=True).dump(data),
+                    'object_url': object_url
+                }
+    
+            elif hook_object == 'report':
+                object_name = data[0]['report_id']
+                user_name = data[0]['user_name']
+                case_name = data[0]['report_id']
+                case_id = data[0]['case_id']
+                file_path = data[0]['file_path']
+                rfile = data[0]['file']
+        except AttributeError as AttrException:
+            self.log.error(str(AttrException))
+            raise
 
         if object_url:
             object_name = self._render_url(object_url, object_name, request_rendering)
