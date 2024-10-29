@@ -118,10 +118,18 @@ class IrisWebHooksInterface(IrisModuleInterface):
                         else:
                             hooks.append(inhook)
 
-                if iris_hook not in ['on_preload_case_delete', 'on_preload_task_delete']:
-                    if 'on_postload' not in iris_hook and 'on_manual_trigger' not in iris_hook:
+                supported_hooks = [
+                    'on_postload',
+                    'on_manual_trigger'
+                ]
+
+                if iris_hook.startswith('on_preload_'):
+                    if not iris_hook.endswith('_delete'):
                         self.log.warning(f'{iris_hook} is not supported by this module')
                         continue
+                elif not any(iris_hook.startswith(prefix) for prefix in supported_hooks):
+                    self.log.warning(f'{iris_hook} is not supported by this module')
+                    continue
 
                 if 'on_manual_trigger' in iris_hook:
                     # Check that we have a manual trigger name
