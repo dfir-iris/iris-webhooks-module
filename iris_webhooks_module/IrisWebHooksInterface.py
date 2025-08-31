@@ -22,7 +22,6 @@ import json
 import pickle
 import uuid
 import datetime
-from string import Template
 
 import requests
 import re
@@ -30,7 +29,8 @@ import re
 import iris_interface.IrisInterfaceStatus as InterfaceStatus
 from iris_interface.IrisModuleInterface import IrisModuleInterface, IrisModuleTypes
 from app.datamgmt.iris_engine.modules_db import module_list_available_hooks
-from app.schema.marshables import AlertSchema, CaseDetailsSchema, CaseAssetsSchema, CaseNoteSchema, IocSchema, EventSchema, CaseEvidenceSchema, CaseTaskSchema
+from app.schema.marshables import (AlertSchema, CaseDetailsSchema, CaseAssetsSchema, CaseNoteSchema,
+                                   IocSchema, EventSchema, CaseEvidenceSchema, CaseTaskSchema, CommentSchema)
 import iris_webhooks_module.IrisWebHooksConfig as interface_conf
 
 
@@ -257,6 +257,9 @@ class IrisWebHooksInterface(IrisModuleInterface):
         if 'on_manual_trigger' in hook_name:
             hook_object = '_'.join(hook_split[3:])
 
+        if 'comment' in hook_name:
+            hook_object = 'comment'
+
         user_name = 'N/A'
         object_name = 'N/A'
         case_name = 'N/A'
@@ -351,7 +354,19 @@ class IrisWebHooksInterface(IrisModuleInterface):
                     'alerts': AlertSchema(many=True).dump(data),
                     'object_url': object_url
                 }
-    
+
+            elif hook_object == 'comment':
+                if hook_type != 'update':
+                    raw_data = {
+                        'comments': [e for e in data],
+                        'object_url': ""
+                    }
+                else:
+                    raw_data = {
+                        'comments': CommentSchema(many=True).dump(data),
+                        'object_url': ""
+                    }
+
             elif hook_object == 'report':
                 object_name = data[0]['report_id']
                 user_name = data[0]['user_name']
